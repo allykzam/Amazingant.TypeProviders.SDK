@@ -6,16 +6,16 @@ interface, this allows properties in the interface to be implemented.
 
 --- a/src/ProvidedTypes.fs
 +++ b/src/ProvidedTypes.fs
-@@ -1052,7 +1052,7 @@ namespace ProviderImplementation.ProvidedTypes
+@@ -1111,7 +1111,7 @@ namespace ProviderImplementation.ProvidedTypes
          new (propertyName, propertyType, ?getterCode, ?setterCode, ?isStatic, ?indexParameters) =
              let isStatic = defaultArg isStatic false
              let indexParameters = defaultArg indexParameters []
 -            let pattrs = (if isStatic then MethodAttributes.Static else enum<MethodAttributes>(0)) ||| MethodAttributes.Public ||| MethodAttributes.SpecialName
 +            let pattrs = (if isStatic then MethodAttributes.Static else MethodAttributes.Virtual) ||| MethodAttributes.Public ||| MethodAttributes.SpecialName
-             let getter = getterCode |> Option.map (fun code -> ProvidedMethod(false, "get_" + propertyName, pattrs, Array.ofList indexParameters, propertyType, code, [], None, K [| |]) :> MethodInfo)
-             let setter = setterCode |> Option.map (fun code -> ProvidedMethod(false, "set_" + propertyName, pattrs, [| yield! indexParameters; yield ProvidedParameter(false, "value",propertyType,isOut=Some false,optionalValue=None) |], typeof<Void>,code, [], None, K [| |]) :> MethodInfo)
+             let getter = getterCode |> Option.map (fun _ -> ProvidedMethod(false, "get_" + propertyName, pattrs, Array.ofList indexParameters, propertyType, getterCode, [], None, K [| |]) :> MethodInfo)
+             let setter = setterCode |> Option.map (fun _ -> ProvidedMethod(false, "set_" + propertyName, pattrs, [| yield! indexParameters; yield ProvidedParameter(false, "value",propertyType,isOut=Some false,optionalValue=None) |], typeof<Void>, setterCode, [], None, K [| |]) :> MethodInfo)
              ProvidedProperty(false, propertyName, PropertyAttributes.None, propertyType, isStatic, Option.map K getter, Option.map K setter, Array.ofList indexParameters, K [| |])
-@@ -1674,6 +1674,21 @@ namespace ProviderImplementation.ProvidedTypes
+@@ -1800,6 +1800,21 @@ namespace ProviderImplementation.ProvidedTypes
          member __.DefineMethodOverride (methodInfoBody,methodInfoDeclaration) = methodOverrides.Add (methodInfoBody, methodInfoDeclaration)
          member __.DefineMethodOverridesDelayed f = methodOverridesQueue.Add (f >> Array.ofList)
  
