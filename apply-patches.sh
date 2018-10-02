@@ -12,6 +12,6 @@ cp SDK/src/ProvidedTypes.fs{,i} src/
 
 find src -type f -print0 | xargs dos2unix -q
 
-#for x in *.patch ; do
-#    patch -p1 -i "$x"
-#done
+for x in *.patch ; do
+    patch -p1 -i "$x"
+done
