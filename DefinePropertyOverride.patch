@@ -4,8 +4,8 @@ interface, this allows properties in the interface to be implemented.
 
 ---
 
---- src/ProvidedTypes.fs
-+++ src/ProvidedTypes.fs
+--- a/src/ProvidedTypes.fs
++++ b/src/ProvidedTypes.fs
 @@ -1052,7 +1052,7 @@ namespace ProviderImplementation.ProvidedTypes
          new (propertyName, propertyType, ?getterCode, ?setterCode, ?isStatic, ?indexParameters) =
              let isStatic = defaultArg isStatic false
@@ -37,8 +37,8 @@ interface, this allows properties in the interface to be implemented.
          // This method is used by Debug.fs and QuotationBuilder.fs.
          // Emulate the F# type provider type erasure mechanism to get the
          // actual (erased) type. We erase ProvidedTypes to their base type
---- src/ProvidedTypes.fsi
-+++ src/ProvidedTypes.fsi
+--- a/src/ProvidedTypes.fsi
++++ b/src/ProvidedTypes.fsi
 @@ -292,6 +292,8 @@ namespace ProviderImplementation.ProvidedTypes
          /// Specifies that the given method bodies implement the given method declarations
          member DefineMethodOverridesDelayed: (unit -> (ProvidedMethod * MethodInfo) list) -> unit

@@ -8,8 +8,8 @@ reflection, but not available for general consumption.
 
 ---
 
---- src/ProvidedTypes.fs
-+++ src/ProvidedTypes.fs
+--- a/src/ProvidedTypes.fs
++++ b/src/ProvidedTypes.fs
 @@ -898,7 +898,9 @@ namespace ProviderImplementation.ProvidedTypes
          let customAttributesImpl = CustomAttributesImpl(customAttributesData)
  
@@ -21,8 +21,8 @@ reflection, but not available for general consumption.
  
          member __.IsTypeInitializer
              with get() = isStatic() && attrs.HasFlag(MethodAttributes.Private)
---- src/ProvidedTypes.fsi
-+++ src/ProvidedTypes.fsi
+--- a/src/ProvidedTypes.fsi
++++ b/src/ProvidedTypes.fsi
 @@ -60,6 +60,7 @@ namespace ProviderImplementation.ProvidedTypes
  
          /// When making a cross-targeting type provider, use this method instead of the ProvidedConstructor constructor from ProvidedTypes
