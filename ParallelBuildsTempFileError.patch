@@ -1,0 +1,20 @@
+diff --git a/src/ProvidedTypes.fs b/src/ProvidedTypes.fs
+--- a/src/ProvidedTypes.fs
++++ b/src/ProvidedTypes.fs
+@@ -8044,8 +8044,14 @@ namespace ProviderImplementation.ProvidedTypes
+                 |> Option.toObj
+         
+         new () = 
+-            let tmpFile = Path.GetTempFileName()
+-            let assemblyFileName = Path.ChangeExtension(tmpFile, "dll")
++            let tmpFile = Path.GetTempFileName()
++            let assemblyFileName =
++                let tmpDir = Path.GetDirectoryName tmpFile
++                let tmpName = Path.GetFileName tmpFile
++                let dllName = Path.ChangeExtension(tmpName, "dll")
++                let pid = System.Diagnostics.Process.GetCurrentProcess().Id
++                let dllPath = System.IO.Path.Combine(tmpDir, (pid.ToString()) + dllName)
++                dllPath
+             File.Delete(tmpFile)
+             let simpleName = Path.GetFileNameWithoutExtension(assemblyFileName)
+             ProvidedAssembly(AssemblyName(simpleName), assemblyFileName)
