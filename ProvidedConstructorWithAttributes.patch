@@ -1,0 +1,33 @@
+This patch adds a new constructor to the `ProvidedConstructor` typedef,
+which accepts attributes to be applied to the constructor. This is
+useful when e.g. you want to mark a constructor as private. In most
+cases this may be seen as unnecessary - why add a constructor to a
+provided type if it isn't going to be called? However, there may be
+cases where you want the constructor to be available to someone using
+reflection, but not available for general consumption.
+
+---
+
+--- src/ProvidedTypes.fs
++++ src/ProvidedTypes.fs
+@@ -898,7 +898,9 @@ namespace ProviderImplementation.ProvidedTypes
+         let customAttributesImpl = CustomAttributesImpl(customAttributesData)
+ 
+         new (parameters, invokeCode) =
+-            ProvidedConstructor(false, MethodAttributes.Public ||| MethodAttributes.RTSpecialName, Array.ofList parameters, invokeCode, None, false, K [| |])
++            ProvidedConstructor(parameters, invokeCode, MethodAttributes.Public)
++        new (parameters, invokeCode, attrs) =
++            ProvidedConstructor(false, attrs ||| MethodAttributes.RTSpecialName, Array.ofList parameters, invokeCode, None, false, K [| |])
+ 
+         member __.IsTypeInitializer
+             with get() = isStatic() && attrs.HasFlag(MethodAttributes.Private)
+--- src/ProvidedTypes.fsi
++++ src/ProvidedTypes.fsi
+@@ -60,6 +60,7 @@ namespace ProviderImplementation.ProvidedTypes
+ 
+         /// When making a cross-targeting type provider, use this method instead of the ProvidedConstructor constructor from ProvidedTypes
+         new: parameters: ProvidedParameter list * invokeCode: (Expr list -> Expr) -> ProvidedConstructor
++        new: parameters: ProvidedParameter list * invokeCode: (Expr list -> Expr) * attrs: MethodAttributes -> ProvidedConstructor
+ 
+         /// Add a 'Obsolete' attribute to this provided constructor
+         member AddObsoleteAttribute: message: string * ?isError: bool -> unit
