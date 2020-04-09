@@ -1,13 +1,11 @@
 diff --git a/src/ProvidedTypes.fs b/src/ProvidedTypes.fs
 --- a/src/ProvidedTypes.fs
 +++ b/src/ProvidedTypes.fs
-@@ -8044,8 +8044,14 @@ namespace ProviderImplementation.ProvidedTypes
-                 |> Option.toObj
+@@ -8247,7 +8247,13 @@ namespace ProviderImplementation.ProvidedTypes
          
          new () = 
--            let tmpFile = Path.GetTempFileName()
+             let tmpFile = Path.GetTempFileName()
 -            let assemblyFileName = Path.ChangeExtension(tmpFile, "dll")
-+            let tmpFile = Path.GetTempFileName()
 +            let assemblyFileName =
 +                let tmpDir = Path.GetDirectoryName tmpFile
 +                let tmpName = Path.GetFileName tmpFile
