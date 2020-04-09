@@ -1,0 +1,119 @@
+This patch adds an optional parameter named `useFSharpStyleOptional` to
+the `ProvidedParameter` type's constructor. When the `optionalValue` is
+specified, and `useFSharpStyleOptional` is set to `true`, the parameter
+will be generated for its parent method with the F# `Optional`
+attribute applied to it, rather than the `DefaultParameterValue` and
+main runtime `Optional` attributes. This results in a generated
+parameter that shows up with a `?` in its name when called from F# code,
+which can be optionally supplied. Note that the parent method's code
+will need to process the parameter as an `Option<'T>` rather than as a
+`'T` when this behavior is used.
+
+---
+
+--- a/src/ProvidedTypes.fs
++++ b/src/ProvidedTypes.fs
+@@ -960,24 +960,28 @@ namespace ProviderImplementation.ProvidedTypes
+         override __.GetCustomAttributes(attributeType, _inherit) = Attributes.CreateEmpty attributeType
+         override __.GetCustomAttributesData() = customAttributesImpl.GetCustomAttributesData()
+ 
+-    type ProvidedParameter(isTgt: bool, parameterName:string, attrs, parameterType:Type, optionalValue:obj option, customAttributesData) =
++    type ProvidedParameter(isTgt: bool, parameterName:string, attrs, parameterType:Type, optionalValue:obj option, useFSharpStyleOptional:bool option, customAttributesData) =
+     
+         inherit ParameterInfo()
+ 
+         let customAttributesImpl = CustomAttributesImpl(isTgt, customAttributesData)
+ 
+-        new (parameterName:string, parameterType:Type, ?isOut:bool, ?optionalValue:obj) = 
+-            ProvidedParameter(false, parameterName, parameterType, isOut, optionalValue)
++        new (parameterName:string, parameterType:Type, ?isOut:bool, ?optionalValue:obj, ?useFSharpStyleOptional:bool) =
++            ProvidedParameter(false, parameterName, parameterType, isOut, optionalValue, useFSharpStyleOptional)
+ 
+         new (_isTgt, parameterName:string, parameterType:Type, isOut:bool option, optionalValue:obj option) = 
++            ProvidedParameter(_isTgt, parameterName, parameterType, isOut, optionalValue, None)
++
++        new (_isTgt, parameterName:string, parameterType:Type, isOut:bool option, optionalValue:obj option, useFSharpStyleOptional:bool option) =
+             let isOut = defaultArg isOut false
+             let attrs = (if isOut then ParameterAttributes.Out else enum 0) |||
+                         (match optionalValue with None -> enum 0 | Some _ -> ParameterAttributes.Optional ||| ParameterAttributes.HasDefault)
+-            ProvidedParameter(false, parameterName, attrs, parameterType, optionalValue, K [| |])
++            ProvidedParameter(false, parameterName, attrs, parameterType, optionalValue, useFSharpStyleOptional, K [| |])
+ 
+         member __.IsParamArray with set(v) = customAttributesImpl.HasParamArray <- v
+         member __.IsReflectedDefinition with set(v) = customAttributesImpl.HasReflectedDefinition <- v
+         member __.OptionalValue = optionalValue 
++        member __.UseFSharpStyleOptional = defaultArg useFSharpStyleOptional false
+         member __.HasDefaultParameterValue = Option.isSome optionalValue
+         member __.BelongsToTargetModel = isTgt
+         member __.AddCustomAttribute(attribute) = customAttributesImpl.AddCustomAttribute(attribute)
+@@ -1058,7 +1062,7 @@ namespace ProviderImplementation.ProvidedTypes
+         let mutable returnTypeFixCache = None
+ 
+         /// The public constructor for the design-time/source model
+-        new (methodName, parameters, returnType, ?invokeCode, ?isStatic) =
++        new (propertyName, propertyType, ?getterCode, ?setterCode, ?isStatic, ?indexParameters) =
+             let isStatic = defaultArg isStatic false
+             let attrs = if isStatic then MethodAttributes.Public ||| MethodAttributes.Static else MethodAttributes.Public
+             ProvidedMethod(false, methodName, attrs, Array.ofList parameters, returnType, invokeCode, [], None, K [| |])
+@@ -9328,6 +9332,7 @@ namespace ProviderImplementation.ProvidedTypes
+             ProvidedParameter(true, x.Name, x.Attributes, 
+                               x.ParameterType |> convTypeToTgt, 
+                               x.OptionalValue, 
++                              Some x.UseFSharpStyleOptional,
+                               (x.GetCustomAttributesData >> convCustomAttributesDataToTgt))
+ 
+         and convStaticParameterDefToTgt (x: ProvidedStaticParameter) = 
+@@ -15492,20 +15497,28 @@ namespace ProviderImplementation.ProvidedTypes
+ 
+                                 let pb = mb.DefineParameter(i+1, p.Attributes, p.Name)
+                                 if p.HasDefaultParameterValue then
+-                                    let ctorTy = typeof<System.Runtime.InteropServices.DefaultParameterValueAttribute>
+-                                    let ctor = ctorTy.GetConstructor([|typeof<obj>|])
+-                                    let ctorTgt = context.ConvertSourceConstructorRefToTarget ctor
+-
+-                                    let ca = mkILCustomAttribMethRef (transCtorSpec ctorTgt, [p.RawDefaultValue], [], [])
+-                                    pb.SetCustomAttribute ca
+-
+-                                    let ctorTy = typeof<System.Runtime.InteropServices.OptionalAttribute>
+-                                    let ctor = ctorTy.GetConstructor([||])
+-                                    let ctorTgt = context.ConvertSourceConstructorRefToTarget ctor
+-                                    let ca = mkILCustomAttribMethRef (transCtorSpec ctorTgt, [], [], [])
+-                                    pb.SetCustomAttribute ca
+-
+-                                    pb.SetConstant p.RawDefaultValue
++                                    if p.UseFSharpStyleOptional then
++                                        let ctorTy = typeof<Microsoft.FSharp.Core.OptionalArgumentAttribute>
++                                        let ctor = ctorTy.GetConstructor([||])
++                                        let ctorTgt = context.ConvertSourceConstructorRefToTarget ctor
++                                        let ca = mkILCustomAttribMethRef (transCtorSpec ctorTgt, [], [], [])
++                                        pb.SetCustomAttribute ca
++                                        pb.SetConstant p.RawDefaultValue
++                                    else
++                                        let ctorTy = typeof<System.Runtime.InteropServices.DefaultParameterValueAttribute>
++                                        let ctor = ctorTy.GetConstructor([|typeof<obj>|])
++                                        let ctorTgt = context.ConvertSourceConstructorRefToTarget ctor
++
++                                        let ca = mkILCustomAttribMethRef (transCtorSpec ctorTgt, [p.RawDefaultValue], [], [])
++                                        pb.SetCustomAttribute ca
++
++                                        let ctorTy = typeof<System.Runtime.InteropServices.OptionalAttribute>
++                                        let ctor = ctorTy.GetConstructor([||])
++                                        let ctorTgt = context.ConvertSourceConstructorRefToTarget ctor
++                                        let ca = mkILCustomAttribMethRef (transCtorSpec ctorTgt, [], [], [])
++                                        pb.SetCustomAttribute ca
++
++                                        pb.SetConstant p.RawDefaultValue
+ 
+                             methMap.[pminfo] <- mb
+
+--- a/src/ProvidedTypes.fsi
++++ b/src/ProvidedTypes.fsi
+@@ -40,7 +40,7 @@ namespace ProviderImplementation.ProvidedTypes
+         inherit ParameterInfo
+ 
+         /// Create a new provided parameter.
+-        new : parameterName: string * parameterType: Type * ?isOut: bool * ?optionalValue: obj -> ProvidedParameter
++        new : parameterName: string * parameterType: Type * ?isOut: bool * ?optionalValue: obj * ?useFSharpStyleOptional: bool -> ProvidedParameter
+ 
+         /// Indicates if the parameter is marked as ParamArray
+         member IsParamArray: bool with set
