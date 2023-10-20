@@ -10,24 +10,24 @@ reflection, but not available for general consumption.
 
 --- a/src/ProvidedTypes.fs
 +++ b/src/ProvidedTypes.fs
-@@ -1001,7 +1001,9 @@ namespace ProviderImplementation.ProvidedTypes
-         let customAttributesImpl = CustomAttributesImpl(isTgt, customAttributesData)
+@@ -1002,7 +1002,9 @@ namespace ProviderImplementation.ProvidedTypes
+     let customAttributesImpl = CustomAttributesImpl(isTgt, customAttributesData)
  
-         new (parameters, invokeCode) =
--            ProvidedConstructor(false, MethodAttributes.Public ||| MethodAttributes.RTSpecialName ||| MethodAttributes.HideBySig, Array.ofList parameters, invokeCode, None, false, K [| |])
-+            ProvidedConstructor(parameters, invokeCode, MethodAttributes.Public)
-+        new (parameters, invokeCode, attrs) =
-+            ProvidedConstructor(false, attrs ||| MethodAttributes.RTSpecialName ||| MethodAttributes.HideBySig, Array.ofList parameters, invokeCode, None, false, K [| |])
+     new (parameters, invokeCode) =
+-        ProvidedConstructor(false, MethodAttributes.Public ||| MethodAttributes.RTSpecialName ||| MethodAttributes.HideBySig, Array.ofList parameters, invokeCode, None, false, K [| |])
++        ProvidedConstructor(parameters, invokeCode, MethodAttributes.Public)
++    new (parameters, invokeCode, attrs) =
++        ProvidedConstructor(false, attrs ||| MethodAttributes.RTSpecialName ||| MethodAttributes.HideBySig, Array.ofList parameters, invokeCode, None, false, K [| |])
  
-         member __.IsTypeInitializer
-             with get() = isStatic() && hasFlag attrs MethodAttributes.Private
+     member __.IsTypeInitializer
+         with get() = isStatic() && hasFlag attrs MethodAttributes.Private
 --- a/src/ProvidedTypes.fsi
 +++ b/src/ProvidedTypes.fsi
 @@ -76,6 +76,7 @@ namespace ProviderImplementation.ProvidedTypes
  
-         /// When making a cross-targeting type provider, use this method instead of the ProvidedConstructor constructor from ProvidedTypes
-         new: parameters: ProvidedParameter list * invokeCode: (Expr list -> Expr) -> ProvidedConstructor
-+        new: parameters: ProvidedParameter list * invokeCode: (Expr list -> Expr) * attrs: MethodAttributes -> ProvidedConstructor
+     /// When making a cross-targeting type provider, use this method instead of the ProvidedConstructor constructor from ProvidedTypes
+     new: parameters: ProvidedParameter list * invokeCode: (Expr list -> Expr) -> ProvidedConstructor
++    new: parameters: ProvidedParameter list * invokeCode: (Expr list -> Expr) * attrs: MethodAttributes -> ProvidedConstructor
  
-         /// Add a 'Obsolete' attribute to this provided constructor
-         member AddObsoleteAttribute: message: string * ?isError: bool -> unit
+     /// Add a 'Obsolete' attribute to this provided constructor
+     member AddObsoleteAttribute: message: string * ?isError: bool -> unit
