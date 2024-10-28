@@ -1,7 +1,7 @@
 diff --git a/src/ProvidedTypes.fs b/src/ProvidedTypes.fs
 --- a/src/ProvidedTypes.fs
 +++ b/src/ProvidedTypes.fs
-@@ -8247,7 +8247,13 @@ namespace ProviderImplementation.ProvidedTypes
+@@ -8244,7 +8244,13 @@ namespace ProviderImplementation.ProvidedTypes
          
          new () = 
              let tmpFile = Path.GetTempFileName()

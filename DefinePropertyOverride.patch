@@ -6,7 +6,7 @@ interface, this allows properties in the interface to be implemented.
 
 --- a/src/ProvidedTypes.fs
 +++ b/src/ProvidedTypes.fs
-@@ -1173,7 +1173,7 @@ namespace ProviderImplementation.ProvidedTypes
+@@ -1174,7 +1174,7 @@ and ProvidedProperty(isTgt: bool, propertyName: string, attrs: PropertyAttribute
      new (propertyName, propertyType, ?getterCode, ?setterCode, ?isStatic, ?indexParameters) =
          let isStatic = defaultArg isStatic false
          let indexParameters = defaultArg indexParameters []
@@ -15,7 +15,7 @@ interface, this allows properties in the interface to be implemented.
          let getter = getterCode |> Option.map (fun _ -> ProvidedMethod(false, "get_" + propertyName, pattrs, Array.ofList indexParameters, propertyType, getterCode, [], None, K [| |]) :> MethodInfo)
          let setter = setterCode |> Option.map (fun _ -> ProvidedMethod(false, "set_" + propertyName, pattrs, [| yield! indexParameters; yield ProvidedParameter(false, "value", propertyType, isOut=Some false, optionalValue=None) |], typeof<Void>, setterCode, [], None, K [| |]) :> MethodInfo)
          ProvidedProperty(false, propertyName, PropertyAttributes.None, propertyType, isStatic, Option.map K getter, Option.map K setter, Array.ofList indexParameters, K [| |])
-@@ -1867,6 +1867,21 @@ namespace ProviderImplementation.ProvidedTypes
+@@ -1873,6 +1873,21 @@ and ProvidedTypeDefinition(isTgt: bool, container:TypeContainer, className: stri
      member __.DefineMethodOverride (methodInfoBody, methodInfoDeclaration) = methodOverrides.Add (methodInfoBody, methodInfoDeclaration)
      member __.DefineMethodOverridesDelayed f = methodOverridesQueue.Add (f >> Array.ofList)
  
@@ -42,8 +42,9 @@ interface, this allows properties in the interface to be implemented.
 @@ -286,6 +286,8 @@ type ProvidedTypeDefinition =
      /// Specifies that the given method bodies implement the given method declarations
      member DefineMethodOverridesDelayed: (unit -> (ProvidedMethod * MethodInfo) list) -> unit
-
-+       member DefinePropertyOverride: propertyInfoBody: ProvidedProperty * propertyInfoDeclaration: PropertyInfo -> unit
+ 
++    member DefinePropertyOverride: propertyInfoBody: ProvidedProperty * propertyInfoDeclaration: PropertyInfo -> unit
 +
      /// Add a 'Obsolete' attribute to this provided type definition
      member AddObsoleteAttribute: message: string * ?isError: bool -> unit
+ 
